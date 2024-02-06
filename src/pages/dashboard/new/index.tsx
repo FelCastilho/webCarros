@@ -7,7 +7,9 @@ import { Input } from '../../../components/input'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
 
-import { v4 as uuidV4 } from 'uuid'
+import { v4 as uuidV4 } from 'uuid';
+
+import toast from "react-hot-toast";
 
 import { storage, db } from '../../../services/firebaseConnection'
 import {
@@ -101,7 +103,7 @@ export function New() {
   function onSubmit(data: FormData){
     
     if(carImages.length === 0){
-      alert('Envie alguma imagem deste carro')
+      toast.success('Envie pelo menos uma imagem')
       return;
     }
 
@@ -114,7 +116,7 @@ export function New() {
     })
 
     addDoc(collection(db, "cars"), {
-      name: data.name,
+      name: data.name.toLocaleUpperCase(),
       model: data.model,
       whatsapp: data.whatsapp,
       city: data.city,
@@ -129,12 +131,12 @@ export function New() {
     })
     .then(() => {
       reset();
-
+      toast.success('Carro cadastrado com sucesso')
       //Limpando a lista de imagens
       setCarImages([]);
     })
     .catch((err) => {
-      console.log('Erro ao cadastrar no banco')
+      console.log('Erro ao cadastrar no banco' + err)
     })
 
   }

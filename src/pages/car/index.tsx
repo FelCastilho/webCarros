@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Container } from '../../components/container'
 import { FaWhatsapp } from 'react-icons/fa'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 
 import { getDoc, doc, } from 'firebase/firestore'
 import { db } from '../../services/firebaseConnection'
+
+import { Swiper, SwiperSlide} from 'swiper/react';
 
 interface CarProps{
   id: string;
@@ -29,8 +31,11 @@ interface ImagesCarProps{
 }
 
 export function CarDetail() {
+
+  const navigate = useNavigate();
   const { id } = useParams(); 
-  const [car, setCar] = useState<CarProps>()
+  const [car, setCar] = useState<CarProps>();
+  const [slidesPerView, setSlidesPerView] = useState<number>(2)
 
   useEffect(() => {
     async function loadCar(){
@@ -39,6 +44,11 @@ export function CarDetail() {
       const docRef = doc(db, "cars", id)
       getDoc(docRef)
       .then((snapshot) => {
+
+        if(!snapshot.data()){
+          navigate('/')
+        }
+        
         setCar({
           id: snapshot.id,
           name: snapshot.data()?.name,
@@ -64,10 +74,43 @@ export function CarDetail() {
 
   }, [id])
 
+  useEffect(() => {
 
+    //Aterando a quantidade de slider por telas
+    function handleRezise(){
+      if(window.innerWidth < 720){
+        setSlidesPerView(1);
+      }else{
+        setSlidesPerView(2);
+      }
+    }
+
+    handleRezise()
+
+    window.addEventListener('resize', handleRezise);
+    
+    //Removendo a função para quando a tela for grande
+    return() => {
+      window.removeEventListener('resize', handleRezise)
+    }
+
+  }, [])
   return (
     <Container>
-      <h1>SLIDER</h1>
+      
+      {car && (
+        <Swiper
+        slidesPerView={slidesPerView}
+        pagination={{ clickable: true }}
+        navigation
+      >
+        {car?.images.map(image => (
+          <SwiperSlide key={image.name}>
+            <img src={image.url} className='w-full h-96 object-cover'/>
+          </SwiperSlide>
+        ))}
+      </Swiper>
+      )}
 
       { car && (
       <main className="w-full bg-white rounded-lg p-6 my-4">
@@ -105,6 +148,8 @@ export function CarDetail() {
         <p>{car?.whatsapp}</p>
 
         <a
+          href={`https://api.whatsapp.com/send?phone${car?.whatsapp}`}
+          target='_blank'
           className="cursor-pointer bg-green-500 w-full text-white flex items-center justify-center gap-2 my-6 h-11 text-xl rounded-lg font-medium"
         >
           Conversar com vendedor
